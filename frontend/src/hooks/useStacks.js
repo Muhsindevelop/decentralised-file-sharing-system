@@ -92,6 +92,42 @@ export const useStacks = () => {
     return openContractCall(options)
   }
 
+  const uploadNewVersion = async (fileId, fileSize, fileHash, gaiaUrl, encryptionKeyHash, versionNotes) => {
+    const options = {
+      contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', // Replace with actual contract address
+      contractName: 'file-registry',
+      functionName: 'upload-new-version',
+      functionArgs: [
+        stringAsciiCV(fileId),
+        uintCV(fileSize),
+        stringAsciiCV(fileHash),
+        stringUtf8CV(gaiaUrl),
+        stringAsciiCV(encryptionKeyHash),
+        stringUtf8CV(versionNotes)
+      ],
+      // network will be auto-detected by wallet
+      appDetails,
+    }
+
+    return openContractCall(options)
+  }
+
+  const rollbackToVersion = async (fileId, targetVersion) => {
+    const options = {
+      contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', // Replace with actual contract address
+      contractName: 'file-registry',
+      functionName: 'rollback-to-version',
+      functionArgs: [
+        stringAsciiCV(fileId),
+        uintCV(targetVersion)
+      ],
+      // network will be auto-detected by wallet
+      appDetails,
+    }
+
+    return openContractCall(options)
+  }
+
   return {
     userData,
     userSession,
@@ -100,7 +136,8 @@ export const useStacks = () => {
     registerFile,
     grantFileAccess,
     revokeFileAccess,
-
+    uploadNewVersion,
+    rollbackToVersion,
     appDetails
   }
 }
