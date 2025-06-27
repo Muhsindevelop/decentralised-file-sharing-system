@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { downloadFromGaia } from '../utils/gaia'
 import { decryptFile } from '../utils/encryption'
+import FileVersions from './FileVersions'
+import UploadNewVersion from './UploadNewVersion'
 
-const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile }) => {
+const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile, onNewVersionUploaded }) => {
   const [downloading, setDownloading] = useState({})
+  const [showVersions, setShowVersions] = useState(null)
+  const [showUploadVersion, setShowUploadVersion] = useState(null)
 
   const handleDownload = async (file) => {
     setDownloading(prev => ({ ...prev, [file.id]: true }))
@@ -51,6 +55,25 @@ const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile }) => {
     return new Date(timestamp * 1000).toLocaleDateString()
   }
 
+  const handleVersionSelected = (file, version) => {
+    console.log(`Selected version ${version} for file ${file.fileName}`)
+    // In a real implementation, this would update the file to point to the selected version
+  }
+
+  const handleNewVersionUploaded = async (versionData) => {
+    try {
+      // In a real implementation, call the upload-new-version contract function
+      console.log('Uploading new version:', versionData)
+
+      if (onNewVersionUploaded) {
+        await onNewVersionUploaded(versionData)
+      }
+    } catch (error) {
+      console.error('Error uploading new version:', error)
+      throw error
+    }
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-semibold mb-4">Your Files</h2>
@@ -72,6 +95,14 @@ const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile }) => {
                     <span className={file.isPublic ? 'text-green-600' : 'text-orange-600'}>
                       {file.isPublic ? 'Public' : 'Private'}
                     </span>
+                    {file.totalVersions > 1 && (
+                      <>
+                        <span className="mx-2">•</span>
+                        <span className="text-blue-600">
+                          v{file.currentVersion}/{file.totalVersions}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -83,14 +114,28 @@ const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile }) => {
                   >
                     {downloading[file.id] ? 'Downloading...' : 'Download'}
                   </button>
-                  
+
+                  <button
+                    onClick={() => setShowVersions(file)}
+                    className="text-purple-500 hover:text-purple-700 text-sm font-medium"
+                  >
+                    Versions
+                  </button>
+
+                  <button
+                    onClick={() => setShowUploadVersion(file)}
+                    className="text-indigo-500 hover:text-indigo-700 text-sm font-medium"
+                  >
+                    New Version
+                  </button>
+
                   <button
                     onClick={() => onShareFile(file)}
                     className="text-green-500 hover:text-green-700 text-sm font-medium"
                   >
                     Share
                   </button>
-                  
+
                   <button
                     onClick={() => onDeleteFile(file)}
                     className="text-red-500 hover:text-red-700 text-sm font-medium"
@@ -106,6 +151,23 @@ const FileBrowser = ({ files, userSession, onDeleteFile, onShareFile }) => {
             </div>
           ))}
         </div>
+      )}
+
+      {showVersions && (
+        <FileVersions
+          file={showVersions}
+          onClose={() => setShowVersions(null)}
+          onVersionSelected={(version) => handleVersionSelected(showVersions, version)}
+        />
+      )}
+
+      {showUploadVersion && (
+        <UploadNewVersion
+          file={showUploadVersion}
+          userSession={userSession}
+          onVersionUploaded={handleNewVersionUploaded}
+          onClose={() => setShowUploadVersion(null)}
+        />
       )}
     </div>
   )

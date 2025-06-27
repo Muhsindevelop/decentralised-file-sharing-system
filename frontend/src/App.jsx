@@ -5,7 +5,7 @@ import FileBrowser from './components/FileBrowser'
 
 function App() {
   const [files, setFiles] = useState([])
-  const { userData, userSession, isLoading, connectWallet, registerFile } = useStacks()
+  const { userData, userSession, isLoading, connectWallet, registerFile, uploadNewVersion } = useStacks()
 
   const handleFileUploaded = async (fileData) => {
     try {
@@ -27,9 +27,12 @@ function App() {
         txId: result.txId,
         fileName: fileData.fileName,
         fileSize: fileData.fileSize,
+        fileHash: fileData.fileHash,
         gaiaUrl: fileData.gaiaUrl,
         isPublic: fileData.isPublic,
         createdAt: Date.now() / 1000,
+        currentVersion: 1,
+        totalVersions: 1
       }
 
       setFiles(prev => [...prev, newFile])
@@ -63,6 +66,41 @@ function App() {
     if (recipient) {
       console.log(`Sharing file ${file.fileName} with ${recipient}`)
       // Call grantFileAccess function
+    }
+  }
+
+  const handleNewVersionUploaded = async (versionData) => {
+    try {
+      const result = await uploadNewVersion(
+        versionData.fileId,
+        versionData.fileSize,
+        versionData.fileHash,
+        versionData.gaiaUrl,
+        versionData.encryptionKeyHash,
+        versionData.versionNotes
+      )
+
+      // Store encryption key locally
+      localStorage.setItem(`encryption-key-${result.txId}`, versionData.encryptionKey)
+
+      // Update local files list
+      setFiles(prev => prev.map(file =>
+        file.id === versionData.fileId
+          ? {
+              ...file,
+              fileSize: versionData.fileSize,
+              fileHash: versionData.fileHash,
+              gaiaUrl: versionData.gaiaUrl,
+              currentVersion: file.currentVersion + 1,
+              totalVersions: file.totalVersions + 1
+            }
+          : file
+      ))
+
+      console.log('New version uploaded successfully:', result)
+    } catch (error) {
+      console.error('Error uploading new version:', error)
+      throw error
     }
   }
 
@@ -122,6 +160,7 @@ function App() {
               userSession={userSession}
               onDeleteFile={handleDeleteFile}
               onShareFile={handleShareFile}
+              onNewVersionUploaded={handleNewVersionUploaded}
             />
           </div>
         )}
