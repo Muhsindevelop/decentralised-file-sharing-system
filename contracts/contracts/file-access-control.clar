@@ -1,8 +1,7 @@
-
 ;; title: file-access-control
-;; version: 1.0.0
+;; version: 1.1.0
 ;; summary: A smart contract for managing file access permissions in a decentralized file sharing system
-;; description: This contract handles granting and revoking access to files, managing shared access lists
+;; description: This contract handles granting and revoking access to files, managing shared access lists with audit trail integration
 
 ;; constants
 (define-constant ERR_NOT_AUTHORIZED (err u200))
@@ -76,6 +75,15 @@
       { user: user, file-id: file-id }
       { has-access: true }
     )
+
+    ;; Log access grant for audit trail
+    (unwrap-panic (contract-call? .file-audit log-file-operation
+      file-id
+      "share"
+      u"Access granted"
+      none
+      none
+    ))
 
     (ok true)
   )
@@ -194,4 +202,3 @@
 (define-read-only (has-shared-file (user principal) (file-id (string-ascii 64)))
   (default-to false (get has-access (map-get? user-shared-files { user: user, file-id: file-id })))
 )
-
