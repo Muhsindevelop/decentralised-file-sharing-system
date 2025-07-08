@@ -1,8 +1,7 @@
-
 ;; title: file-registry
-;; version: 1.0.0
+;; version: 1.1.0
 ;; summary: A smart contract for managing file metadata and ownership in a decentralized file sharing system
-;; description: This contract handles file registration, ownership tracking, and basic file operations
+;; description: This contract handles file registration, ownership tracking, and basic file operations with audit trail integration
 
 ;; constants
 (define-constant ERR_NOT_AUTHORIZED (err u100))
@@ -86,6 +85,15 @@
       { exists: true }
     )
 
+    ;; Log file upload operation for audit trail
+    (unwrap-panic (contract-call? .file-audit log-file-operation
+      file-id
+      "upload"
+      u"File uploaded"
+      none
+      (some file-hash)
+    ))
+
     (ok file-id)
   )
 )
@@ -111,6 +119,15 @@
   (let ((file-data (unwrap! (map-get? files { file-id: file-id }) ERR_FILE_NOT_FOUND)))
     ;; Check if caller is the owner
     (asserts! (is-eq tx-sender (get owner file-data)) ERR_NOT_AUTHORIZED)
+
+    ;; Log file deletion for audit trail
+    (unwrap-panic (contract-call? .file-audit log-file-operation
+      file-id
+      "delete"
+      u"File deleted"
+      (some (get file-hash file-data))
+      none
+    ))
 
     ;; Remove file metadata
     (map-delete files { file-id: file-id })
