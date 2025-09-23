@@ -1,4 +1,3 @@
-
 ;; title: file-access-control
 ;; version: 1.0.0
 ;; summary: A smart contract for managing file access permissions in a decentralized file sharing system
@@ -11,6 +10,7 @@
 (define-constant ERR_ACCESS_NOT_FOUND (err u203))
 (define-constant ERR_INVALID_INPUT (err u204))
 (define-constant ERR_CANNOT_SHARE_WITH_SELF (err u205))
+(define-constant ERR_FILE_REGISTRY_CALL_FAILED (err u206))
 
 ;; data maps
 ;; Map to store file access permissions
@@ -57,8 +57,8 @@
     ;; Check if access already granted
     (asserts! (is-none (map-get? file-access { file-id: file-id, user: user })) ERR_ACCESS_ALREADY_GRANTED)
 
-    ;; Note: In a real implementation, we would check if caller owns the file
-    ;; by calling the file-registry contract. For simplicity, we assume the caller is authorized.
+    ;; Verify file exists and caller owns it by calling file-registry contract
+    (asserts! (contract-call? .file-registry is-file-owner caller file-id) ERR_NOT_AUTHORIZED)
 
     ;; Grant access
     (map-set file-access
@@ -90,7 +90,10 @@
         (access-data (unwrap! (map-get? file-access { file-id: file-id, user: user }) ERR_ACCESS_NOT_FOUND)))
 
     ;; Check if caller is the one who granted access or the file owner
-    (asserts! (is-eq caller (get granted-by access-data)) ERR_NOT_AUTHORIZED)
+    (asserts! (or 
+      (is-eq caller (get granted-by access-data))
+      (contract-call? .file-registry is-file-owner caller file-id)
+    ) ERR_NOT_AUTHORIZED)
 
     ;; Remove access
     (map-delete file-access { file-id: file-id, user: user })
@@ -110,6 +113,9 @@
   (let ((caller tx-sender))
     ;; Validate inputs
     (asserts! (> (len file-id) u0) ERR_INVALID_INPUT)
+
+    ;; Verify file exists by checking if it has an owner
+    (asserts! (is-some (contract-call? .file-registry get-file-owner file-id)) ERR_FILE_NOT_FOUND)
 
     ;; Store access request
     (map-set access-requests
@@ -135,7 +141,8 @@
   (let ((caller tx-sender)
         (request-data (unwrap! (map-get? access-requests { file-id: file-id, requester: requester }) ERR_ACCESS_NOT_FOUND)))
 
-    ;; Note: In a real implementation, we would check if caller owns the file
+    ;; Verify file exists and caller owns it by calling file-registry contract
+    (asserts! (contract-call? .file-registry is-file-owner caller file-id) ERR_NOT_AUTHORIZED)
 
     ;; Update request status
     (map-set access-requests
@@ -194,4 +201,3 @@
 (define-read-only (has-shared-file (user principal) (file-id (string-ascii 64)))
   (default-to false (get has-access (map-get? user-shared-files { user: user, file-id: file-id })))
 )
-
