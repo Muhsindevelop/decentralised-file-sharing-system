@@ -1,4 +1,3 @@
-
 ;; title: file-access-control
 ;; version: 1.0.0
 ;; summary: A smart contract for managing file access permissions in a decentralized file sharing system
@@ -189,9 +188,3 @@
 (define-read-only (get-access-request (file-id (string-ascii 64)) (requester principal))
   (map-get? access-requests { file-id: file-id, requester: requester })
 )
-
-;; Check if user has shared files
-(define-read-only (has-shared-file (user principal) (file-id (string-ascii 64)))
-  (default-to false (get has-access (map-get? user-shared-files { user: user, file-id: file-id })))
-)
-

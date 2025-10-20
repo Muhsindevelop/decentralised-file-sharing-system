@@ -1,4 +1,3 @@
-
 ;; title: file-registry
 ;; version: 1.0.0
 ;; summary: A smart contract for managing file metadata and ownership in a decentralized file sharing system
