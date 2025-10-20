@@ -8,12 +8,27 @@ requirements = []
 [contracts.file-access-control]
 path = 'contracts/file-access-control.clar'
 clarity_version = 3
-epoch = 3.1
+epoch = '3.1'
 
 [contracts.file-registry]
 path = 'contracts/file-registry.clar'
 clarity_version = 3
-epoch = 3.1
+epoch = '3.1'
+
+[contracts.file-tagging]
+path = 'contracts/file-tagging.clar'
+clarity_version = 3
+epoch = 'latest'
+
+[contracts.file-versioning]
+path = 'contracts/file-versioning.clar'
+clarity_version = 3
+epoch = '3.1'
+
+[contracts.time-limited-access]
+path = 'contracts/time-limited-access.clar'
+clarity_version = 3
+epoch = '3.2'
 [repl.analysis]
 passes = ['check_checker']
 
